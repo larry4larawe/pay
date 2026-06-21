@@ -25,7 +25,12 @@
         "nsis",
         "msi"
       ],
+      "icon": "assets/logo.png",
       "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     },
     "files": [
       "dist/index.html",
