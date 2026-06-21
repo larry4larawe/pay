@@ -60,9 +60,15 @@ export default function EmployeeForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (window.tadpay) {
-      await window.tadpay.saveEmployee(form);
+    if (!window.tadpay) {
+      alert('Erreur : application non connectée');
+      return;
+    }
+    const result = await window.tadpay.saveEmployee(form);
+    if (result && result.success) {
       navigate('/employees');
+    } else {
+      alert('Erreur lors de l\'enregistrement : ' + (result?.error || 'inconnue'));
     }
   };
 
