@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { app } = require('electron');
 
 // Taux CNSS (Togo)
 const CNSS_SALARIAL = 0.04;       // 4% part salariale
@@ -19,7 +20,7 @@ const DEFAULT_TAX_BRACKETS = [
 ];
 
 function loadTaxBrackets() {
-  const file = path.join(__dirname, '..', '..', 'data', 'taxBrackets.json');
+  const file = path.join(app.getPath('userData'), 'data', 'taxBrackets.json');
   if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8'));
   return DEFAULT_TAX_BRACKETS;
 }
@@ -111,13 +112,13 @@ function initPayrollHandlers(ipcMain) {
 
   // Settings handlers
   ipcMain.handle('settings:getCompany', () => {
-    const file = path.join(__dirname, '..', '..', 'data', 'company.json');
+    const file = path.join(app.getPath('userData'), 'data', 'company.json');
     if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8'));
     return null;
   });
 
   ipcMain.handle('settings:saveCompany', (_event, data) => {
-    const file = path.join(__dirname, '..', '..', 'data', 'company.json');
+    const file = path.join(app.getPath('userData'), 'data', 'company.json');
     fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
     return { success: true };
   });
@@ -125,7 +126,7 @@ function initPayrollHandlers(ipcMain) {
   ipcMain.handle('settings:getTaxBrackets', () => loadTaxBrackets());
 
   ipcMain.handle('settings:saveTaxBrackets', (_event, data) => {
-    const file = path.join(__dirname, '..', '..', 'data', 'taxBrackets.json');
+    const file = path.join(app.getPath('userData'), 'data', 'taxBrackets.json');
     fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
     return { success: true };
   });

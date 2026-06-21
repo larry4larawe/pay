@@ -23,7 +23,6 @@ const EMPTY_EMPLOYEE = {
   dateEmbauche: '',
   adresse: '',
   situationFamiliale: 'Célibataire sans enfant',
-  nombreParts: 1,
   matricule: '',
   cni: '',
   numCNSS: '',
@@ -111,17 +110,7 @@ export default function EmployeeForm() {
                 ))}
               </select>
             </div>
-            <div className="form-group">
-              <label>Nombre de parts</label>
-              <input
-                name="nombreParts"
-                type="number"
-                step="0.5"
-                min="1"
-                value={form.nombreParts}
-                onChange={handleChange}
-              />
-            </div>
+            <div className="form-group"></div>
           </div>
           <div className="form-row">
             <div className="form-group">

@@ -1,11 +1,14 @@
 const fs = require('fs');
 const path = require('path');
-const { shell, BrowserWindow } = require('electron');
+const { shell, BrowserWindow, app } = require('electron');
 const { exportDocx } = require('../../src/utils/docx/generator');
 const { buildBulletinHTML } = require('../../src/utils/pdf/converter');
 
-const OUTPUT_DOCX = path.join(__dirname, '..', '..', 'output', 'docx');
-const OUTPUT_PDF = path.join(__dirname, '..', '..', 'output', 'pdf');
+const USER_DATA = app.getPath('userData');
+const OUTPUT_BASE = path.join(app.getPath('documents'), 'TAD_Pay', 'Exports');
+const OUTPUT_DOCX = path.join(OUTPUT_BASE, 'docx');
+const OUTPUT_PDF = path.join(OUTPUT_BASE, 'pdf');
+const DATA_DIR = path.join(USER_DATA, 'data');
 
 function ensureOutputDirs() {
   [OUTPUT_DOCX, OUTPUT_PDF].forEach((dir) => {
@@ -14,7 +17,7 @@ function ensureOutputDirs() {
 }
 
 function loadCompanyInfo() {
-  const file = path.join(__dirname, '..', '..', 'data', 'company.json');
+  const file = path.join(DATA_DIR, 'company.json');
   if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8'));
   return {
     nom: 'TAD IT CONSULTING SARL',
