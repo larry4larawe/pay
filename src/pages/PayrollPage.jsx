@@ -8,10 +8,13 @@ const MONTHS = [
 export default function PayrollPage() {
   const [employees, setEmployees] = useState([]);
   const [selectedEmp, setSelectedEmp] = useState('');
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [fromMonth, setFromMonth] = useState(new Date().getMonth() + 1);
+  const [fromYear, setFromYear] = useState(new Date().getFullYear());
+  const [toMonth, setToMonth] = useState(new Date().getMonth() + 1);
+  const [toYear, setToYear] = useState(new Date().getFullYear());
   const [payroll, setPayroll] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
 
   useEffect(() => {
     if (window.tadpay) {
@@ -21,6 +24,7 @@ export default function PayrollPage() {
 
   const emp = employees.find((e) => e.id === selectedEmp);
 
+  // ── Calcul pour un mois donné ──────────────────────────────
   const handleCalculate = async () => {
     if (!selectedEmp) return;
     const salaryComponents = [
@@ -31,63 +35,121 @@ export default function PayrollPage() {
 
     if (window.tadpay) {
       const result = await window.tadpay.calculatePayroll(
-        emp, salaryComponents, month, year, null
+        emp, salaryComponents, fromMonth, fromYear, null
       );
       setPayroll(result);
     }
   };
 
-  const buildFileName = () => {
+  // ── Nom de fichier pour un mois donné ─────────────────────
+  const buildFileName = (m, y) => {
     if (!emp) return '';
-    const monthName = MONTHS[month - 1];
-    return `${emp.nom}_${emp.prenom}_${monthName}_${year}`
+    const monthName = MONTHS[m - 1];
+    return `${emp.nom}_${emp.prenom}_${monthName}_${y}`
       .replace(/\s+/g, '_')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
   };
 
-  const handleExportDocx = async () => {
-    if (!payroll || !window.tadpay) return;
+  // ── Génération de la série de mois ────────────────────────
+  const handleGenerateSeries = async () => {
+    if (!emp || !window.tadpay) return;
     setExporting(true);
-    try {
-      const result = await window.tadpay.exportDocx(payroll, buildFileName());
-      if (result.success) {
-        alert(`DOCX exporté : ${result.path}`);
-        window.tadpay.openOutputFolder('docx');
-      } else {
-        alert(`Erreur DOCX : ${result.error}`);
-      }
-    } catch (err) {
-      alert(`Erreur : ${err.message}`);
-    }
-    setExporting(false);
-  };
+    setStatusMsg('');
 
-  const handleExportPdf = async () => {
-    if (!payroll || !window.tadpay) return;
-    setExporting(true);
-    try {
-      const result = await window.tadpay.exportPdf(payroll, buildFileName());
-      if (result.success) {
-        alert(`PDF exporté : ${result.path}`);
-        window.tadpay.openOutputFolder('pdf');
-      } else {
-        alert(`Erreur PDF : ${result.error}`);
-      }
-    } catch (err) {
-      alert(`Erreur : ${err.message}`);
+    // Construire la liste des mois dans la plage
+    const months = [];
+    let y = fromYear;
+    let m = fromMonth;
+    const end = toYear * 12 + toMonth;
+    while (y * 12 + m <= end) {
+      months.push({ month: m, year: y });
+      m++;
+      if (m > 12) { m = 1; y++; }
     }
+
+    if (months.length === 0) {
+      setExporting(false);
+      return;
+    }
+
+    const salaryComponents = [
+      { libelle: 'Salaire de base', base: '30 j', taux: '---', montant: emp.salaireBase || 0 },
+      { libelle: 'Sursalaire', base: '---', taux: '---', montant: emp.sursalaire || 0 },
+      { libelle: 'Indemnité de fonction', base: '---', taux: '---', montant: emp.indemniteFonction || 0 },
+    ];
+
+    let successCount = 0;
+    const errors = [];
+
+    for (let i = 0; i < months.length; i++) {
+      const { month, year } = months[i];
+      const monthLabel = `${MONTHS[month - 1]} ${year}`;
+      setStatusMsg(`Génération ${i + 1}/${months.length} : ${monthLabel}...`);
+
+      // Si mode chèque, demander le numéro
+      let chequeNum = '';
+      if (emp.modePaiement === 'Chèque') {
+        chequeNum = window.prompt(`N° du chèque pour ${monthLabel} :`, '');
+        if (chequeNum === null) {
+          errors.push(`${monthLabel} : annulé par l'utilisateur`);
+          continue;
+        }
+      }
+
+      // Cloner l'employé avec le numéro de chèque du mois
+      const empForMonth = { ...emp };
+      if (emp.modePaiement === 'Chèque') {
+        empForMonth.numeroCheque = chequeNum;
+      }
+
+      try {
+        // Calculer
+        const payrollData = await window.tadpay.calculatePayroll(
+          empForMonth, salaryComponents, month, year, null
+        );
+
+        const fileName = buildFileName(month, year);
+
+        // Exporter DOCX
+        const docxResult = await window.tadpay.exportDocx(payrollData, fileName);
+        if (!docxResult.success) errors.push(`${monthLabel} DOCX : ${docxResult.error}`);
+
+        // Exporter PDF
+        const pdfResult = await window.tadpay.exportPdf(payrollData, fileName);
+        if (!pdfResult.success) errors.push(`${monthLabel} PDF : ${pdfResult.error}`);
+
+        if (docxResult.success && pdfResult.success) successCount++;
+      } catch (err) {
+        errors.push(`${monthLabel} : ${err.message}`);
+      }
+
+      // Petite pause pour ne pas surcharger
+      await new Promise((r) => setTimeout(r, 200));
+    }
+
     setExporting(false);
+
+    if (errors.length > 0) {
+      setStatusMsg(
+        `${successCount}/${months.length} bulletins générés.\nErreurs :\n${errors.join('\n')}`
+      );
+    } else {
+      setStatusMsg(`${successCount} bulletins générés avec succès.`);
+      window.tadpay.openOutputFolder('docx');
+    }
   };
 
   const formatFCFA = (n) => new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
 
+  // ── Rendu ──────────────────────────────────────────────────
   return (
     <div>
       <div className="page-header">
         <h1>Générer un bulletin de paie</h1>
       </div>
 
+      {/* Sélection */}
       <div className="card">
         <div className="form-row">
           <div className="form-group">
@@ -101,9 +163,12 @@ export default function PayrollPage() {
               ))}
             </select>
           </div>
+        </div>
+
+        <div className="form-row" style={{ marginTop: 12 }}>
           <div className="form-group">
-            <label>Mois</label>
-            <select value={month} onChange={(e) => setMonth(parseInt(e.target.value))}>
+            <label>Du mois</label>
+            <select value={fromMonth} onChange={(e) => setFromMonth(parseInt(e.target.value))}>
               {MONTHS.map((m, i) => (
                 <option key={i} value={i + 1}>{m}</option>
               ))}
@@ -113,18 +178,54 @@ export default function PayrollPage() {
             <label>Année</label>
             <input
               type="number"
-              value={year}
-              onChange={(e) => setYear(parseInt(e.target.value))}
+              value={fromYear}
+              onChange={(e) => setFromYear(parseInt(e.target.value))}
+              min={2020}
+              max={2100}
+            />
+          </div>
+          <div className="form-group">
+            <label>Au mois</label>
+            <select value={toMonth} onChange={(e) => setToMonth(parseInt(e.target.value))}>
+              {MONTHS.map((m, i) => (
+                <option key={i} value={i + 1}>{m}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Année</label>
+            <input
+              type="number"
+              value={toYear}
+              onChange={(e) => setToYear(parseInt(e.target.value))}
               min={2020}
               max={2100}
             />
           </div>
         </div>
-        <button className="btn btn-primary" onClick={handleCalculate} disabled={!selectedEmp}>
-          📊 Calculer
-        </button>
+
+        <div className="flex gap-8" style={{ marginTop: 16 }}>
+          <button className="btn btn-primary" onClick={handleCalculate} disabled={!selectedEmp}>
+            📊 Aperçu (1 mois)
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={handleGenerateSeries}
+            disabled={!selectedEmp || exporting}
+            style={{ background: exporting ? '#999' : '#34c759' }}
+          >
+            {exporting ? '⏳ Génération en cours...' : '📦 Générer la série'}
+          </button>
+        </div>
+
+        {statusMsg && (
+          <div style={{ marginTop: 12, padding: 12, background: '#f0f0f0', borderRadius: 6, whiteSpace: 'pre-line', fontSize: 13 }}>
+            {statusMsg}
+          </div>
+        )}
       </div>
 
+      {/* Aperçu */}
       {payroll && (
         <>
           <div className="card">
@@ -235,29 +336,6 @@ export default function PayrollPage() {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Boutons d'export */}
-          <div className="flex gap-8 mb-16">
-            <button
-              className="btn btn-primary"
-              onClick={handleExportDocx}
-              disabled={exporting}
-            >
-              📄 Exporter DOCX
-            </button>
-            <button
-              className="btn btn-outline"
-              onClick={handleExportPdf}
-              disabled={exporting}
-            >
-              📑 Exporter PDF
-            </button>
-            {payroll && (
-              <span className="text-secondary" style={{ alignSelf: 'center' }}>
-                Nom du fichier : <strong>{buildFileName()}</strong>
-              </span>
-            )}
           </div>
         </>
       )}
