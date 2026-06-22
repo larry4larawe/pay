@@ -2,6 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
 
+let _dataDir = null;
+function getDataDir() {
+  if (!_dataDir) {
+    _dataDir = path.join(app.getPath('userData'), 'data');
+  }
+  return _dataDir;
+}
+
 // Taux CNSS (Togo)
 const CNSS_SALARIAL = 0.04;       // 4% part salariale
 const CNSS_PREST_FAM = 0.03;      // 3% prestations familiales
@@ -20,7 +28,7 @@ const DEFAULT_TAX_BRACKETS = [
 ];
 
 function loadTaxBrackets() {
-  const file = path.join(app.getPath('userData'), 'data', 'taxBrackets.json');
+  const file = path.join(getDataDir(), 'taxBrackets.json');
   if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8'));
   return DEFAULT_TAX_BRACKETS;
 }
@@ -112,13 +120,13 @@ function initPayrollHandlers(ipcMain) {
 
   // Settings handlers
   ipcMain.handle('settings:getCompany', () => {
-    const file = path.join(app.getPath('userData'), 'data', 'company.json');
+    const file = path.join(getDataDir(), 'company.json');
     if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8'));
     return null;
   });
 
   ipcMain.handle('settings:saveCompany', (_event, data) => {
-    const file = path.join(app.getPath('userData'), 'data', 'company.json');
+    const file = path.join(getDataDir(), 'company.json');
     fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
     return { success: true };
   });
@@ -126,7 +134,7 @@ function initPayrollHandlers(ipcMain) {
   ipcMain.handle('settings:getTaxBrackets', () => loadTaxBrackets());
 
   ipcMain.handle('settings:saveTaxBrackets', (_event, data) => {
-    const file = path.join(app.getPath('userData'), 'data', 'taxBrackets.json');
+    const file = path.join(getDataDir(), 'taxBrackets.json');
     fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
     return { success: true };
   });

@@ -3,20 +3,29 @@ const path = require('path');
 const crypto = require('crypto');
 const { app } = require('electron');
 
-const DATA_DIR = path.join(app.getPath('userData'), 'data');
-const EMPLOYEES_FILE = path.join(DATA_DIR, 'employees.json');
+let _dataDir = null;
+let _employeesFile = null;
+function getDataPaths() {
+  if (!_dataDir) {
+    _dataDir = path.join(app.getPath('userData'), 'data');
+    _employeesFile = path.join(_dataDir, 'employees.json');
+  }
+  return { dataDir: _dataDir, employeesFile: _employeesFile };
+}
 
 function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  const { dataDir } = getDataPaths();
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
   }
 }
 
 function loadEmployees() {
   ensureDataDir();
-  if (!fs.existsSync(EMPLOYEES_FILE)) return [];
+  const { employeesFile } = getDataPaths();
+  if (!fs.existsSync(employeesFile)) return [];
   try {
-    return JSON.parse(fs.readFileSync(EMPLOYEES_FILE, 'utf-8'));
+    return JSON.parse(fs.readFileSync(employeesFile, 'utf-8'));
   } catch (err) {
     console.error('Erreur lecture employees.json:', err.message);
     return [];
@@ -25,7 +34,8 @@ function loadEmployees() {
 
 function saveEmployees(data) {
   ensureDataDir();
-  fs.writeFileSync(EMPLOYEES_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  const { employeesFile } = getDataPaths();
+  fs.writeFileSync(employeesFile, JSON.stringify(data, null, 2), 'utf-8');
 }
 
 function initEmployeeHandlers(ipcMain) {
