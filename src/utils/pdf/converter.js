@@ -188,11 +188,12 @@ function buildBulletinHTML(bulletinData, companyInfo) {
   <p class="cumuls-title">CUMULS DE L'ANNÉE ${period.year}</p>
   <table>
     <tr>
-      <th class="center">Cumul Brut</th><th class="center">Cumul CNSS</th><th class="center">Cumul IRPP</th><th class="center">Cumul Net</th>
+      <th class="center">Cumul Brut</th><th class="center">Cumul CNSS</th><th class="center">Cumul AMU</th><th class="center">Cumul IRPP</th><th class="center">Cumul Net</th>
     </tr>
     <tr>
       <td class="center bold">${formatFCFA(cumulsAnnee.brut)}</td>
       <td class="center">${formatFCFA(cumulsAnnee.cnss)}</td>
+      <td class="center">${formatFCFA(cumulsAnnee.amu)}</td>
       <td class="center">${formatFCFA(cumulsAnnee.irpp)}</td>
       <td class="center bold">${formatFCFA(cumulsAnnee.net)}</td>
     </tr>

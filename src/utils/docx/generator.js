@@ -298,16 +298,18 @@ function generateBulletin(bulletinData, companyInfo) {
     rows: [
       new TableRow({
         children: [
-          cell('Cumul Brut', { bold: true, alignment: AlignmentType.CENTER, width: 25 }),
-          cell('Cumul CNSS', { bold: true, alignment: AlignmentType.CENTER, width: 25 }),
-          cell('Cumul IRPP', { bold: true, alignment: AlignmentType.CENTER, width: 25 }),
-          cell('Cumul Net', { bold: true, alignment: AlignmentType.CENTER, width: 25 }),
+          cell('Cumul Brut', { bold: true, alignment: AlignmentType.CENTER, width: 20 }),
+          cell('Cumul CNSS', { bold: true, alignment: AlignmentType.CENTER, width: 20 }),
+          cell('Cumul AMU', { bold: true, alignment: AlignmentType.CENTER, width: 20 }),
+          cell('Cumul IRPP', { bold: true, alignment: AlignmentType.CENTER, width: 20 }),
+          cell('Cumul Net', { bold: true, alignment: AlignmentType.CENTER, width: 20 }),
         ],
       }),
       new TableRow({
         children: [
           cell(formatFCFA(cumulsAnnee.brut), { alignment: AlignmentType.CENTER, bold: true }),
           cell(formatFCFA(cumulsAnnee.cnss), { alignment: AlignmentType.CENTER }),
+          cell(formatFCFA(cumulsAnnee.amu), { alignment: AlignmentType.CENTER }),
           cell(formatFCFA(cumulsAnnee.irpp), { alignment: AlignmentType.CENTER }),
           cell(formatFCFA(cumulsAnnee.net), { alignment: AlignmentType.CENTER, bold: true }),
         ],

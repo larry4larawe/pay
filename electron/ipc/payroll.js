@@ -88,12 +88,13 @@ function calculatePayroll(employee, salaryComponents, month, year, cumuls) {
   // Coût total employeur
   const coutTotalEmployeur = salaireBrut + cnssPatronal.total;
 
-  // Cumuls annuels
+  // Cumuls annuels (basés sur l'index du mois : janvier=1, décembre=12)
   const cumulsAnnee = {
-    brut: (cumuls?.brut || 0) + salaireBrut,
-    cnss: (cumuls?.cnss || 0) + cnssSalarial,
-    irpp: (cumuls?.irpp || 0) + irpp,
-    net: (cumuls?.net || 0) + netAPayer,
+    brut: salaireBrut * month,
+    cnss: cnssSalarial * month,
+    amu: amu * month,
+    irpp: irpp * month,
+    net: netAPayer * month,
   };
 
   return {
