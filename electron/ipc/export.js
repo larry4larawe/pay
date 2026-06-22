@@ -102,4 +102,4 @@ function initExportHandlers(ipcMain) {
   });
 }
 
-module.exports = { initExportHandlers, OUTPUT_DOCX, OUTPUT_PDF };
+module.exports = { initExportHandlers };
