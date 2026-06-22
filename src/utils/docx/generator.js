@@ -106,7 +106,7 @@ function formatFCFA(n) {
 function generateBulletin(bulletinData, companyInfo) {
   const {
     employee, period, remuneration,
-    salaireBrut, cnssSalarial, baseImposable, irpp,
+    salaireBrut, cnssSalarial, amu, baseImposable, irpp,
     totalRetenues, netAPayer, cnssPatronal, coutTotalEmployeur, cumulsAnnee,
   } = bulletinData;
 
@@ -205,6 +205,7 @@ function generateBulletin(bulletinData, companyInfo) {
     boldRow('SALAIRE BRUT', '', '', formatFCFA(salaireBrut), '---'),
     sectionHeader('COTISATIONS SALARIALES'),
     dataRow('CNSS - part salariale', formatFCFA(salaireBrut), '4,00 %', '---', formatFCFA(cnssSalarial)),
+    dataRow('CNSS-AMU', formatFCFA(salaireBrut), '5,00 %', '---', formatFCFA(amu)),
     sectionHeader('IMPÔTS SUR SALAIRES'),
     dataRow('Base imposable', formatFCFA(baseImposable), '---', '---', '---'),
     dataRow('IRPP (barème progressif)', formatFCFA(baseImposable), 'Barème', '---', formatFCFA(irpp)),
@@ -323,57 +324,6 @@ function generateBulletin(bulletinData, companyInfo) {
     paiementText += `\nBanque : ${employee.banque || ''} — N° Compte : ${employee.numCompte || ''}`;
   }
 
-  // ── Signature blocks ──
-  const signRows = new Table({
-    rows: [
-      new TableRow({
-        children: [
-          new TableCell({
-            children: [
-              new Paragraph({
-                children: [textRun("Pour l'Employeur", { bold: true, size: FONT_SIZE_HEADING })],
-                alignment: AlignmentType.CENTER,
-              }),
-              new Paragraph({
-                children: [textRun(companyInfo.signataireNom || '', { bold: true })],
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 200 },
-              }),
-              new Paragraph({
-                children: [textRun(companyInfo.signataireFonction || '', { size: FONT_SIZE_SM, color: COLOR_GRAY, italics: true })],
-                alignment: AlignmentType.CENTER,
-              }),
-            ],
-            width: { size: 50, type: WidthType.PERCENTAGE },
-            borders: {
-              top: { style: BorderStyle.SINGLE, size: 1, color: '999999' },
-              bottom: NO_BORDER, left: NO_BORDER, right: NO_BORDER,
-            },
-          }),
-          new TableCell({
-            children: [
-              new Paragraph({
-                children: [textRun('Pour la Salariée', { bold: true, size: FONT_SIZE_HEADING })],
-                alignment: AlignmentType.CENTER,
-              }),
-              new Paragraph({
-                children: [textRun('(Signature précédée de « Lu et approuvé »)', { size: FONT_SIZE_SM, color: COLOR_GRAY, italics: true })],
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 200 },
-              }),
-            ],
-            width: { size: 50, type: WidthType.PERCENTAGE },
-            borders: {
-              top: { style: BorderStyle.SINGLE, size: 1, color: '999999' },
-              bottom: NO_BORDER, left: NO_BORDER, right: NO_BORDER,
-            },
-          }),
-        ],
-      }),
-    ],
-    width: { size: 100, type: WidthType.PERCENTAGE },
-  });
-
   // ── Assemble document ──
   const doc = new Document({
     styles: {
@@ -468,9 +418,6 @@ function generateBulletin(bulletinData, companyInfo) {
             children: [textRun(paiementText, { size: FONT_SIZE_SM })],
             spacing: { before: 80, after: 40 },
           }),
-
-          // Signature
-          signRows,
 
           // Legal mention
           new Paragraph({

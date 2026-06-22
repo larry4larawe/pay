@@ -2,7 +2,7 @@
 function buildBulletinHTML(bulletinData, companyInfo) {
   const {
     employee, period, remuneration,
-    salaireBrut, cnssSalarial, baseImposable, irpp,
+    salaireBrut, cnssSalarial, amu, baseImposable, irpp,
     totalRetenues, netAPayer, cnssPatronal, coutTotalEmployeur, cumulsAnnee,
   } = bulletinData;
 
@@ -84,9 +84,6 @@ function buildBulletinHTML(bulletinData, companyInfo) {
   .charges-title { font-size: 8pt; color: #555; font-style: italic; margin-top: 16px; margin-bottom: 4px; }
   .cumuls-title { font-size: 8pt; color: #555; font-style: italic; margin-top: 12px; margin-bottom: 4px; }
   .payment-info { font-size: 8pt; font-style: italic; color: #555; margin-top: 12px; }
-  .signatures { display: flex; margin-top: 24px; }
-  .sign-block { flex: 1; text-align: center; padding-top: 12px; }
-  .sign-block .line { border-top: 1px solid #999; padding-top: 8px; }
   .legal { text-align: center; font-size: 7pt; color: #999; font-style: italic; margin-top: 24px; }
 </style>
 </head>
@@ -153,6 +150,11 @@ function buildBulletinHTML(bulletinData, companyInfo) {
         <td>${formatFCFA(salaireBrut)}</td><td>4,00 %</td>
         <td class="right">---</td><td class="right">${formatFCFA(cnssSalarial)}</td>
       </tr>
+      <tr>
+        <td>CNSS-AMU</td>
+        <td>${formatFCFA(salaireBrut)}</td><td>5,00 %</td>
+        <td class="right">---</td><td class="right">${formatFCFA(amu)}</td>
+      </tr>
       <tr><td class="section-header" colspan="5">IMPÔTS SUR SALAIRES</td></tr>
       <tr>
         <td>Base imposable</td><td>${formatFCFA(baseImposable)}</td><td>---</td><td></td><td></td>
@@ -197,23 +199,6 @@ function buildBulletinHTML(bulletinData, companyInfo) {
   </table>
 
   <div class="payment-info">${paiementHTML}</div>
-
-  <!-- Signatures -->
-  <div class="signatures">
-    <div class="sign-block">
-      <div class="line">
-        <p><strong>Pour l'Employeur</strong></p>
-        <p><strong>${companyInfo.signataireNom || ''}</strong></p>
-        <p><em>${companyInfo.signataireFonction || ''}</em></p>
-      </div>
-    </div>
-    <div class="sign-block">
-      <div class="line">
-        <p><strong>Pour la Salariée</strong></p>
-        <p><em>(Signature précédée de « Lu et approuvé »)</em></p>
-      </div>
-    </div>
-  </div>
 
   <p class="legal">Le présent bulletin doit être conservé sans limitation de durée.</p>
 </body>

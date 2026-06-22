@@ -12,6 +12,7 @@ function getDataDir() {
 
 // Taux CNSS (Togo)
 const CNSS_SALARIAL = 0.04;       // 4% part salariale
+const CNSS_AMU = 0.05;            // 5% AMU (Assurance Maladie Universelle)
 const CNSS_PREST_FAM = 0.03;      // 3% prestations familiales
 const CNSS_ACC_TRAVAIL = 0.02;    // 2% accidents du travail
 const CNSS_VIEILLESSE = 0.125;    // 12,5% pension vieillesse
@@ -66,14 +67,17 @@ function calculatePayroll(employee, salaryComponents, month, year, cumuls) {
   // CNSS salariale
   const cnssSalarial = calculateCNSS_Salarial(salaireBrut);
 
+  // AMU
+  const amu = Math.round(salaireBrut * CNSS_AMU);
+
   // Base imposable
-  const baseImposable = salaireBrut - cnssSalarial;
+  const baseImposable = salaireBrut - cnssSalarial - amu;
 
   // IRPP
   const irpp = calculateIRPP(baseImposable);
 
   // Total retenues
-  const totalRetenues = cnssSalarial + irpp;
+  const totalRetenues = cnssSalarial + amu + irpp;
 
   // Net à payer
   const netAPayer = salaireBrut - totalRetenues;
@@ -98,6 +102,7 @@ function calculatePayroll(employee, salaryComponents, month, year, cumuls) {
     remuneration: salaryComponents,
     salaireBrut,
     cnssSalarial,
+    amu,
     baseImposable,
     irpp,
     totalRetenues,

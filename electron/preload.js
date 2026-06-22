@@ -8,8 +8,8 @@ contextBridge.exposeInMainWorld('tadpay', {
   deleteEmployee: (id) => ipcRenderer.invoke('employee:delete', id),
 
   // Paie
-  calculatePayroll: (employeeId, month, year) =>
-    ipcRenderer.invoke('payroll:calculate', employeeId, month, year),
+  calculatePayroll: (emp, salaryComponents, month, year, cumuls) =>
+    ipcRenderer.invoke('payroll:calculate', emp, salaryComponents, month, year, cumuls),
   generateBulletin: (payrollData) =>
     ipcRenderer.invoke('payroll:generate', payrollData),
 
