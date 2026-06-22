@@ -15,6 +15,7 @@ export default function PayrollPage() {
   const [payroll, setPayroll] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
+  const [outputDir, setOutputDir] = useState('');
 
   useEffect(() => {
     if (window.tadpay) {
@@ -23,6 +24,12 @@ export default function PayrollPage() {
   }, []);
 
   const emp = employees.find((e) => e.id === selectedEmp);
+
+  const handlePickFolder = async () => {
+    if (!window.tadpay) return;
+    const result = await window.tadpay.pickOutputFolder();
+    if (!result.canceled) setOutputDir(result.path);
+  };
 
   // ── Calcul pour un mois donné ──────────────────────────────
   const handleCalculate = async () => {
@@ -112,11 +119,11 @@ export default function PayrollPage() {
         const fileName = buildFileName(month, year);
 
         // Exporter DOCX
-        const docxResult = await window.tadpay.exportDocx(payrollData, fileName);
+        const docxResult = await window.tadpay.exportDocx(payrollData, fileName, outputDir);
         if (!docxResult.success) errors.push(`${monthLabel} DOCX : ${docxResult.error}`);
 
         // Exporter PDF
-        const pdfResult = await window.tadpay.exportPdf(payrollData, fileName);
+        const pdfResult = await window.tadpay.exportPdf(payrollData, fileName, outputDir);
         if (!pdfResult.success) errors.push(`${monthLabel} PDF : ${pdfResult.error}`);
 
         if (docxResult.success && pdfResult.success) successCount++;
@@ -136,7 +143,7 @@ export default function PayrollPage() {
       );
     } else {
       setStatusMsg(`${successCount} bulletins générés avec succès.`);
-      window.tadpay.openOutputFolder('docx');
+      window.tadpay.openOutputFolder(outputDir || null);
     }
   };
 
@@ -216,6 +223,20 @@ export default function PayrollPage() {
           >
             {exporting ? '⏳ Génération en cours...' : '📦 Générer la série'}
           </button>
+        </div>
+
+        {/* Dossier de sortie */}
+        <div className="flex gap-8" style={{ marginTop: 16, alignItems: 'center' }}>
+          <button className="btn btn-outline" onClick={handlePickFolder}>
+            📁 Choisir le dossier de sortie
+          </button>
+          {outputDir ? (
+            <span className="text-secondary" style={{ fontSize: 12 }}>{outputDir}</span>
+          ) : (
+            <span className="text-secondary" style={{ fontSize: 12 }}>
+              Par défaut : Documents\TAD_Pay\Exports
+            </span>
+          )}
         </div>
 
         {statusMsg && (

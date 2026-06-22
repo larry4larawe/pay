@@ -14,12 +14,14 @@ contextBridge.exposeInMainWorld('tadpay', {
     ipcRenderer.invoke('payroll:generate', payrollData),
 
   // Export
-  exportDocx: (bulletinData, fileName) =>
-    ipcRenderer.invoke('export:docx', bulletinData, fileName),
-  exportPdf: (bulletinData, fileName) =>
-    ipcRenderer.invoke('export:pdf', bulletinData, fileName),
-  openOutputFolder: (type) =>
-    ipcRenderer.invoke('export:openFolder', type),
+  exportDocx: (bulletinData, fileName, outputDir) =>
+    ipcRenderer.invoke('export:docx', bulletinData, fileName, outputDir),
+  exportPdf: (bulletinData, fileName, outputDir) =>
+    ipcRenderer.invoke('export:pdf', bulletinData, fileName, outputDir),
+  openOutputFolder: (path) =>
+    ipcRenderer.invoke('export:openFolder', path),
+  pickOutputFolder: () =>
+    ipcRenderer.invoke('export:pickFolder'),
 
   // Paramètres
   getCompanyInfo: () => ipcRenderer.invoke('settings:getCompany'),

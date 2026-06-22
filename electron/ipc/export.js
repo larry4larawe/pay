@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { shell, BrowserWindow, app } = require('electron');
+const { shell, BrowserWindow, app, dialog } = require('electron');
 const { exportDocx } = require('../../src/utils/docx/generator');
 const { buildBulletinHTML } = require('../../src/utils/pdf/converter');
 
@@ -20,9 +20,11 @@ function getPaths() {
   return _paths;
 }
 
-function ensureOutputDirs() {
-  const p = getPaths();
-  [p.outputDocx, p.outputPdf].forEach((dir) => {
+function ensureOutputDirs(outputDir) {
+  const base = outputDir || getPaths().outputDocx;
+  const docxDir = outputDir ? path.join(outputDir, 'docx') : getPaths().outputDocx;
+  const pdfDir = outputDir ? path.join(outputDir, 'pdf') : getPaths().outputPdf;
+  [docxDir, pdfDir].forEach((dir) => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   });
 }
@@ -44,12 +46,31 @@ function loadCompanyInfo() {
 }
 
 function initExportHandlers(ipcMain) {
+  // Sélecteur de dossier
+  ipcMain.handle('export:pickFolder', async () => {
+    const result = await dialog.showOpenDialog({
+      title: 'Choisir le dossier de sortie',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    if (result.canceled) return { canceled: true };
+    return { canceled: false, path: result.filePaths[0] };
+  });
+
   // Export DOCX
-  ipcMain.handle('export:docx', async (_event, bulletinData, fileName) => {
+  ipcMain.handle('export:docx', async (_event, bulletinData, fileName, outputDir) => {
     try {
-      ensureOutputDirs();
+      const docxDir = outputDir ? path.join(outputDir, 'docx') : getPaths().outputDocx;
+      ensureOutputDirs(outputDir);
+
+      // Override OUTPUT_DIR dans le générateur en passant le chemin
       const companyInfo = loadCompanyInfo();
-      const filePath = await exportDocx(bulletinData, companyInfo, fileName);
+      const { generateBulletin } = require('../../src/utils/docx/generator');
+      const { Packer } = require('docx');
+
+      const doc = generateBulletin(bulletinData, companyInfo);
+      const buffer = await Packer.toBuffer(doc);
+      const filePath = path.join(docxDir, `${fileName}.docx`);
+      fs.writeFileSync(filePath, buffer);
       return { success: true, path: filePath };
     } catch (err) {
       return { success: false, error: err.message };
@@ -57,13 +78,14 @@ function initExportHandlers(ipcMain) {
   });
 
   // Export PDF via Electron printToPDF
-  ipcMain.handle('export:pdf', async (_event, bulletinData, fileName) => {
+  ipcMain.handle('export:pdf', async (_event, bulletinData, fileName, outputDir) => {
     try {
-      ensureOutputDirs();
+      const pdfDir = outputDir ? path.join(outputDir, 'pdf') : getPaths().outputPdf;
+      ensureOutputDirs(outputDir);
+
       const companyInfo = loadCompanyInfo();
       const html = buildBulletinHTML(bulletinData, companyInfo);
 
-      // Créer une fenêtre cachée pour le rendu PDF
       const win = new BrowserWindow({
         width: 800,
         height: 1100,
@@ -72,8 +94,6 @@ function initExportHandlers(ipcMain) {
       });
 
       await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
-
-      // Attendre un peu le rendu
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const pdfBuffer = await win.webContents.printToPDF({
@@ -84,7 +104,7 @@ function initExportHandlers(ipcMain) {
 
       win.close();
 
-      const filePath = path.join(getPaths().outputPdf, `${fileName}.pdf`);
+      const filePath = path.join(pdfDir, `${fileName}.pdf`);
       fs.writeFileSync(filePath, pdfBuffer);
       return { success: true, path: filePath };
     } catch (err) {
@@ -93,11 +113,15 @@ function initExportHandlers(ipcMain) {
   });
 
   // Ouvrir le dossier de sortie
-  ipcMain.handle('export:openFolder', (_event, type) => {
-    const p = getPaths();
-    const folder = type === 'pdf' ? p.outputPdf : p.outputDocx;
-    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
-    shell.openPath(folder);
+  ipcMain.handle('export:openFolder', (_event, folderPath) => {
+    if (folderPath && fs.existsSync(folderPath)) {
+      shell.openPath(folderPath);
+    } else {
+      // Fallback: ouvrir le dossier docx par défaut
+      const p = getPaths();
+      if (!fs.existsSync(p.outputDocx)) fs.mkdirSync(p.outputDocx, { recursive: true });
+      shell.openPath(p.outputDocx);
+    }
     return { success: true };
   });
 }
