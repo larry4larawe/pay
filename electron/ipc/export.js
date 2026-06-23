@@ -89,9 +89,16 @@ function initExportHandlers(ipcMain, mainWindow) {
       promptWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
       promptWin.once('ready-to-show', () => promptWin.show());
 
-      promptWin.on('closed', () => {
-        const val = promptWin.__result;
-        resolve(val !== undefined ? val : null);
+      promptWin.on('close', async (e) => {
+        e.preventDefault();
+        try {
+          const val = await promptWin.webContents.executeJavaScript('window.__result || null');
+          promptWin.destroy();
+          resolve(val);
+        } catch {
+          promptWin.destroy();
+          resolve(null);
+        }
       });
     });
   });
