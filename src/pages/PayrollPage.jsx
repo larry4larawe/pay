@@ -34,17 +34,24 @@ export default function PayrollPage() {
   // ── Calcul pour un mois donné ──────────────────────────────
   const handleCalculate = async () => {
     if (!selectedEmp) return;
+    setStatusMsg('');
     const salaryComponents = [
       { libelle: 'Salaire de base', base: '30 j', taux: '---', montant: emp.salaireBase || 0 },
       { libelle: 'Sursalaire', base: '---', taux: '---', montant: emp.sursalaire || 0 },
       { libelle: 'Indemnité de fonction', base: '---', taux: '---', montant: emp.indemniteFonction || 0 },
     ];
 
-    if (window.tadpay) {
+    if (!window.tadpay) {
+      setStatusMsg('Erreur : application non connectée');
+      return;
+    }
+    try {
       const result = await window.tadpay.calculatePayroll(
         emp, salaryComponents, fromMonth, fromYear, null
       );
       setPayroll(result);
+    } catch (err) {
+      setStatusMsg('Erreur calcul : ' + err.message);
     }
   };
 
