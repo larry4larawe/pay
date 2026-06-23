@@ -28,7 +28,6 @@ const EMPTY_EMPLOYEE = {
   numCNSS: '',
   typeContrat: 'CDI',
   modePaiement: 'Virement bancaire',
-  numeroCheque: '',
   banque: '',
   numCompte: '',
   salaireBase: 0,
@@ -228,12 +227,6 @@ export default function EmployeeForm() {
                 ))}
               </select>
             </div>
-            {form.modePaiement === 'Chèque' && (
-              <div className="form-group">
-                <label>N° du chèque</label>
-                <input name="numeroCheque" value={form.numeroCheque} onChange={handleChange} />
-              </div>
-            )}
             {form.modePaiement === 'Virement bancaire' && (
               <>
                 <div className="form-group">
