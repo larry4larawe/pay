@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld('tadpay', {
     ipcRenderer.invoke('export:openFolder', path),
   pickOutputFolder: () =>
     ipcRenderer.invoke('export:pickFolder'),
+  promptChequeNumber: (monthLabel) =>
+    ipcRenderer.invoke('dialog:promptCheque', monthLabel),
 
   // Paramètres
   getCompanyInfo: () => ipcRenderer.invoke('settings:getCompany'),

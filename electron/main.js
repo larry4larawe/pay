@@ -30,7 +30,7 @@ function createWindow() {
 app.whenReady().then(() => {
   initEmployeeHandlers(ipcMain);
   initPayrollHandlers(ipcMain);
-  initExportHandlers(ipcMain);
+  initExportHandlers(ipcMain, mainWindow);
 
   createWindow();
 

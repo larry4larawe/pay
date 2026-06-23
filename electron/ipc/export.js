@@ -45,7 +45,57 @@ function loadCompanyInfo() {
   };
 }
 
-function initExportHandlers(ipcMain) {
+function initExportHandlers(ipcMain, mainWindow) {
+  // Dialogue numéro de chèque
+  ipcMain.handle('dialog:promptCheque', async (_event, monthLabel) => {
+    // Utilise un BrowserWindow modal au lieu de prompt() bloquant
+    return new Promise((resolve) => {
+      const promptWin = new BrowserWindow({
+        width: 420,
+        height: 180,
+        parent: mainWindow,
+        modal: true,
+        show: false,
+        resizable: false,
+        minimizable: false,
+        maximizable: false,
+        title: 'N° de chèque',
+        webPreferences: { nodeIntegration: false, contextIsolation: true },
+      });
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+        body { font-family: -apple-system, sans-serif; padding: 20px; background: #f5f5f7; }
+        label { font-size: 13px; color: #555; }
+        input { width: 100%; padding: 8px; margin: 8px 0 16px; border: 1px solid #d1d1d6; border-radius: 6px; font-size: 14px; }
+        .btns { text-align: right; }
+        button { padding: 6px 16px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; margin-left: 8px; }
+        .ok { background: #007aff; color: #fff; }
+        .cancel { background: transparent; border: 1px solid #d1d1d6; }
+      </style></head><body>
+        <label>N° du chèque pour ${monthLabel} :</label>
+        <input id="num" type="text" autofocus onkeydown="if(event.key==='Enter') submit()">
+        <div class="btns">
+          <button class="cancel" onclick="window.close()">Annuler</button>
+          <button class="ok" onclick="submit()">Valider</button>
+        </div>
+        <script>
+          function submit() {
+            window.__result = document.getElementById('num').value;
+            window.close();
+          }
+        </script>
+      </body></html>`;
+
+      promptWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+      promptWin.once('ready-to-show', () => promptWin.show());
+
+      promptWin.on('closed', () => {
+        const val = promptWin.__result;
+        resolve(val !== undefined ? val : null);
+      });
+    });
+  });
+
   // Sélecteur de dossier
   ipcMain.handle('export:pickFolder', async () => {
     const result = await dialog.showOpenDialog({

@@ -94,14 +94,15 @@ export default function PayrollPage() {
       const monthLabel = `${MONTHS[month - 1]} ${year}`;
       setStatusMsg(`Génération ${i + 1}/${months.length} : ${monthLabel}...`);
 
-      // Si mode chèque, demander le numéro
+      // Si mode chèque, demander le numéro (dialogue asynchrone)
       let chequeNum = '';
       if (emp.modePaiement === 'Chèque') {
-        chequeNum = window.prompt(`N° du chèque pour ${monthLabel} :`, '');
-        if (chequeNum === null) {
+        const response = await window.tadpay.promptChequeNumber(monthLabel);
+        if (response === null) {
           errors.push(`${monthLabel} : annulé par l'utilisateur`);
           continue;
         }
+        chequeNum = response;
       }
 
       // Cloner l'employé avec le numéro de chèque du mois
