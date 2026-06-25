@@ -18,7 +18,10 @@
       "target": [
         "dmg",
         "zip"
-      ]
+      ],
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
     },
     "win": {
       "target": [

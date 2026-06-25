@@ -52,9 +52,10 @@ jobs:
         run: npx webpack --config webpack.config.js --mode production
 
       - name: Build macOS app (DMG + ZIP, Apple Silicon)
-        # Build non signé : pas de certificat Apple Developer requis.
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+        # Signature ad-hoc (identity "-" dans package.json) : pas de certificat
+        # Apple Developer requis, mais l'app a une signature valide pour pouvoir
+        # démarrer sur Apple Silicon. L'utilisateur devra retirer la quarantaine
+        # au premier lancement (xattr -dr com.apple.quarantine).
         run: npx electron-builder --mac --arm64 --publish=never
 
       - name: Upload DMG
