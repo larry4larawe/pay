@@ -30,7 +30,8 @@ function createWindow() {
 app.whenReady().then(() => {
   initEmployeeHandlers(ipcMain);
   initPayrollHandlers(ipcMain);
-  initExportHandlers(ipcMain, mainWindow);
+  // Getter : la fenêtre n'existe pas encore ici et peut être recréée (activate).
+  initExportHandlers(ipcMain, () => mainWindow);
 
   createWindow();
 

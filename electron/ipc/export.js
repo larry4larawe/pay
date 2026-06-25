@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const { shell, BrowserWindow, app, dialog } = require('electron');
-const { exportDocx } = require('../../src/utils/docx/generator');
 const { buildBulletinHTML } = require('../../src/utils/pdf/converter');
 
 // Lazy — résolus au premier appel (après app.whenReady)
@@ -45,16 +44,17 @@ function loadCompanyInfo() {
   };
 }
 
-function initExportHandlers(ipcMain, mainWindow) {
+function initExportHandlers(ipcMain, getMainWindow) {
   // Dialogue numéro de chèque
   ipcMain.handle('dialog:promptCheque', async (_event, monthLabel) => {
     // Utilise un BrowserWindow modal au lieu de prompt() bloquant
     return new Promise((resolve) => {
+      const parentWin = typeof getMainWindow === 'function' ? getMainWindow() : getMainWindow;
       const promptWin = new BrowserWindow({
         width: 420,
         height: 180,
-        parent: mainWindow,
-        modal: true,
+        parent: parentWin || undefined,
+        modal: Boolean(parentWin),
         show: false,
         resizable: false,
         minimizable: false,

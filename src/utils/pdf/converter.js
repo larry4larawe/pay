@@ -11,27 +11,37 @@ function buildBulletinHTML(bulletinData, companyInfo) {
     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
   ];
   const moisNom = mois[period.month - 1];
+  // Dernier jour réel du mois (gère février et les mois de 31 jours)
+  const lastDay = new Date(period.year, period.month, 0).getDate();
   const debutMois = `01/${String(period.month).padStart(2, '0')}/${period.year}`;
-  const finMois = `30/${String(period.month).padStart(2, '0')}/${period.year}`;
-  const datePaiement = `30 ${moisNom.toLowerCase()} ${period.year}`;
+  const finMois = `${String(lastDay).padStart(2, '0')}/${String(period.month).padStart(2, '0')}/${period.year}`;
+  const datePaiement = `${lastDay} ${moisNom.toLowerCase()} ${period.year}`;
 
   const formatFCFA = (n) => new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' FCFA';
 
+  // Échappe les valeurs dynamiques pour éviter toute casse/injection HTML
+  const esc = (v) => String(v == null ? '' : v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
   // Mode de paiement
-  let paiementHTML = `<p><em>Mode de paiement : ${employee.modePaiement || ''}</em>`;
+  let paiementHTML = `<p><em>Mode de paiement : ${esc(employee.modePaiement || '')}</em>`;
   if (employee.modePaiement === 'Chèque') {
-    paiementHTML += ` — N° ${employee.numeroCheque || 'N/A'}`;
+    paiementHTML += ` — N° ${esc(employee.numeroCheque || 'N/A')}`;
   } else if (employee.modePaiement === 'Virement bancaire') {
-    paiementHTML += `<br>Banque : ${employee.banque || ''} — N° Compte : ${employee.numCompte || ''}`;
+    paiementHTML += `<br>Banque : ${esc(employee.banque || '')} — N° Compte : ${esc(employee.numCompte || '')}`;
   }
   paiementHTML += '</p>';
 
   // Rows for salary table
   const remunerationRows = remuneration.map(r => `
     <tr>
-      <td>${r.libelle}</td>
-      <td>${r.base}</td>
-      <td>${r.taux}</td>
+      <td>${esc(r.libelle)}</td>
+      <td>${esc(r.base)}</td>
+      <td>${esc(r.taux)}</td>
       <td class="right">${formatFCFA(r.montant)}</td>
       <td class="right">---</td>
     </tr>
@@ -90,17 +100,17 @@ function buildBulletinHTML(bulletinData, companyInfo) {
 <body>
   <div class="header">
     <div class="header-left">
-      <p class="company-name">${companyInfo.nom || 'TAD IT CONSULTING SARL'}</p>
-      <p class="company-info">${companyInfo.formeJuridique || ''}</p>
-      <p class="company-info">Siège : ${companyInfo.adresse || ''}, Lomé, Togo</p>
-      <p>RCCM : ${companyInfo.rccm || ''}</p>
-      <p>NIF : ${companyInfo.nif || ''}</p>
-      <p>N° employeur CNSS : ${companyInfo.numCNSSEmployeur || ''}</p>
-      <p>Tél : ${companyInfo.telephone || ''}</p>
+      <p class="company-name">${esc(companyInfo.nom || 'TAD IT CONSULTING SARL')}</p>
+      <p class="company-info">${esc(companyInfo.formeJuridique || '')}</p>
+      <p class="company-info">Siège : ${esc(companyInfo.adresse || '')}, Lomé, Togo</p>
+      <p>RCCM : ${esc(companyInfo.rccm || '')}</p>
+      <p>NIF : ${esc(companyInfo.nif || '')}</p>
+      <p>N° employeur CNSS : ${esc(companyInfo.numCNSSEmployeur || '')}</p>
+      <p>Tél : ${esc(companyInfo.telephone || '')}</p>
     </div>
     <div class="header-right">
       <h1>BULLETIN DE PAIE</h1>
-      <p><strong>Période : ${moisNom} ${period.year}</strong></p>
+      <p><strong>Période : ${esc(moisNom)} ${period.year}</strong></p>
       <p>du ${debutMois} au ${finMois}</p>
       <p>Date de paiement : ${datePaiement}</p>
     </div>
@@ -111,20 +121,20 @@ function buildBulletinHTML(bulletinData, companyInfo) {
   <!-- Employee info -->
   <table class="emp-table">
     <tr>
-      <td class="label">Nom et Prénom</td><td class="value">${employee.nom} ${employee.prenom}</td>
-      <td class="label">Matricule</td><td class="value">${employee.matricule || ''}</td>
+      <td class="label">Nom et Prénom</td><td class="value">${esc(employee.nom)} ${esc(employee.prenom)}</td>
+      <td class="label">Matricule</td><td class="value">${esc(employee.matricule || '')}</td>
     </tr>
     <tr>
-      <td class="label">Fonction</td><td class="value">${employee.fonction || ''}</td>
-      <td class="label">Catégorie</td><td class="value">${employee.categorie || ''}</td>
+      <td class="label">Fonction</td><td class="value">${esc(employee.fonction || '')}</td>
+      <td class="label">Catégorie</td><td class="value">${esc(employee.categorie || '')}</td>
     </tr>
     <tr>
-      <td class="label">Date d'embauche</td><td class="value">${employee.dateEmbauche || ''}</td>
-      <td class="label">N° CNSS</td><td class="value">${employee.numCNSS || ''}</td>
+      <td class="label">Date d'embauche</td><td class="value">${esc(employee.dateEmbauche || '')}</td>
+      <td class="label">N° CNSS</td><td class="value">${esc(employee.numCNSS || '')}</td>
     </tr>
     <tr>
-      <td class="label">Adresse</td><td class="value">${employee.adresse || ''}</td>
-      <td class="label">Type de contrat</td><td class="value">${employee.typeContrat || ''}</td>
+      <td class="label">Adresse</td><td class="value">${esc(employee.adresse || '')}</td>
+      <td class="label">Type de contrat</td><td class="value">${esc(employee.typeContrat || '')}</td>
     </tr>
   </table>
 

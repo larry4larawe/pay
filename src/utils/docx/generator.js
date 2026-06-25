@@ -1,14 +1,13 @@
 const {
-  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+  Document, Paragraph, TextRun, Table, TableRow, TableCell,
   ImageRun, AlignmentType, WidthType, BorderStyle, ShadingType,
-  Header, Footer, PageNumber, convertInchesToTwip,
-  HeadingLevel, VerticalAlign, TabStopPosition, TabStopType,
+  convertInchesToTwip, VerticalAlign,
 } = require('docx');
 const fs = require('fs');
 const path = require('path');
 
-const OUTPUT_DIR = path.join(__dirname, '..', '..', 'output', 'docx');
-const LOGO_PATH = path.join(__dirname, '..', '..', 'assets', 'logo.png');
+// __dirname = src/utils/docx → remonter de 3 niveaux jusqu'à la racine du projet
+const LOGO_PATH = path.join(__dirname, '..', '..', '..', 'assets', 'logo.png');
 
 // ─── Styles constants ───────────────────────────────────────────
 const FONT = 'Times New Roman';
@@ -115,9 +114,11 @@ function generateBulletin(bulletinData, companyInfo) {
     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
   ];
   const moisNom = mois[period.month - 1];
+  // Dernier jour réel du mois (gère février et les mois de 31 jours)
+  const lastDay = new Date(period.year, period.month, 0).getDate();
   const debutMois = `01/${String(period.month).padStart(2, '0')}/${period.year}`;
-  const finMois = `30/${String(period.month).padStart(2, '0')}/${period.year}`;
-  const datePaiement = `30 ${moisNom.toLowerCase()} ${period.year}`;
+  const finMois = `${String(lastDay).padStart(2, '0')}/${String(period.month).padStart(2, '0')}/${period.year}`;
+  const datePaiement = `${lastDay} ${moisNom.toLowerCase()} ${period.year}`;
 
   // Image du logo (si présent)
   const logoImage = fs.existsSync(LOGO_PATH)
@@ -184,7 +185,7 @@ function generateBulletin(bulletinData, companyInfo) {
     ['Fonction', employee.fonction || '', 'Catégorie', employee.categorie || ''],
     ['Date d\'embauche', employee.dateEmbauche || '', 'N° CNSS', employee.numCNSS || ''],
     ['Adresse', employee.adresse || '', 'Type de contrat', employee.typeContrat || ''],
-    ['Situation familiale', employee.situationFamiliale || '', 'Nombre de parts', String(employee.nombreParts || 1)],
+    ['Situation familiale', employee.situationFamiliale || '', '', ''],
   ];
 
   const empTableRows = empInfoRows.map(([l1, v1, l2, v2]) =>
@@ -435,17 +436,4 @@ function generateBulletin(bulletinData, companyInfo) {
   return doc;
 }
 
-// ─── Export ─────────────────────────────────────────────────────
-async function exportDocx(bulletinData, companyInfo, fileName) {
-  if (!fs.existsSync(OUTPUT_DIR)) {
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-  }
-
-  const doc = generateBulletin(bulletinData, companyInfo);
-  const buffer = await Packer.toBuffer(doc);
-  const filePath = path.join(OUTPUT_DIR, `${fileName}.docx`);
-  fs.writeFileSync(filePath, buffer);
-  return filePath;
-}
-
-module.exports = { generateBulletin, exportDocx };
+module.exports = { generateBulletin };

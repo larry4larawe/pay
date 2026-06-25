@@ -30,4 +30,6 @@ contextBridge.exposeInMainWorld('tadpay', {
   saveCompanyInfo: (data) => ipcRenderer.invoke('settings:saveCompany', data),
   getTaxBrackets: () => ipcRenderer.invoke('settings:getTaxBrackets'),
   saveTaxBrackets: (data) => ipcRenderer.invoke('settings:saveTaxBrackets', data),
+  getRates: () => ipcRenderer.invoke('settings:getRates'),
+  saveRates: (data) => ipcRenderer.invoke('settings:saveRates', data),
 });

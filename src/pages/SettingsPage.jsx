@@ -22,9 +22,26 @@ const DEFAULT_BRACKETS = [
   { min: 500001, max: 9999999, rate: 0.30 },
 ];
 
+const DEFAULT_RATES = {
+  cnssSalarial: 0.04,
+  amu: 0.05,
+  prestationsFamiliales: 0.03,
+  accidentsTravail: 0.02,
+  vieillesse: 0.125,
+};
+
+const RATE_LABELS = [
+  { key: 'cnssSalarial', label: 'CNSS — part salariale', group: 'Retenues salariales' },
+  { key: 'amu', label: 'AMU (Assurance Maladie Universelle)', group: 'Retenues salariales' },
+  { key: 'prestationsFamiliales', label: 'CNSS — Prestations familiales', group: 'Charges patronales' },
+  { key: 'accidentsTravail', label: 'CNSS — Accidents du travail', group: 'Charges patronales' },
+  { key: 'vieillesse', label: 'CNSS — Pension vieillesse', group: 'Charges patronales' },
+];
+
 export default function SettingsPage() {
   const [company, setCompany] = useState(EMPTY_COMPANY);
   const [brackets, setBrackets] = useState(DEFAULT_BRACKETS);
+  const [rates, setRates] = useState(DEFAULT_RATES);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -35,8 +52,26 @@ export default function SettingsPage() {
       window.tadpay.getTaxBrackets().then((data) => {
         if (data) setBrackets(data);
       });
+      if (window.tadpay.getRates) {
+        window.tadpay.getRates().then((data) => {
+          if (data) setRates({ ...DEFAULT_RATES, ...data });
+        });
+      }
     }
   }, []);
+
+  const handleRateChange = (key, value) => {
+    const pct = parseFloat(value);
+    setRates((prev) => ({ ...prev, [key]: isNaN(pct) ? 0 : pct / 100 }));
+  };
+
+  const handleSaveRates = async () => {
+    if (window.tadpay && window.tadpay.saveRates) {
+      await window.tadpay.saveRates(rates);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
+  };
 
   const handleCompanyChange = (e) => {
     setCompany((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -129,6 +164,50 @@ export default function SettingsPage() {
         <div className="flex gap-8">
           <button className="btn btn-primary" onClick={handleSaveCompany}>
             Enregistrer
+          </button>
+          {saved && <span className="text-secondary" style={{ alignSelf: 'center' }}>✓ Sauvegardé</span>}
+        </div>
+      </div>
+
+      {/* Taux de cotisation */}
+      <div className="card">
+        <h2>Taux de cotisation</h2>
+        <p className="text-secondary" style={{ marginBottom: 16 }}>
+          Taux appliqués au salaire brut pour les retenues salariales et les charges patronales.
+        </p>
+
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Cotisation</th>
+              <th>Catégorie</th>
+              <th>Taux (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {RATE_LABELS.map(({ key, label, group }) => (
+              <tr key={key}>
+                <td>{label}</td>
+                <td className="text-secondary">{group}</td>
+                <td>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={+(rates[key] * 100).toFixed(3)}
+                    onChange={(e) => handleRateChange(key, e.target.value)}
+                    style={{ width: 80 }}
+                  />
+                  <span> %</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="flex gap-8 mt-16">
+          <button className="btn btn-primary" onClick={handleSaveRates}>
+            Enregistrer les taux
           </button>
           {saved && <span className="text-secondary" style={{ alignSelf: 'center' }}>✓ Sauvegardé</span>}
         </div>
