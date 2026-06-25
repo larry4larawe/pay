@@ -1,4 +1,4 @@
-name: Build Windows Installer
+name: Build installers
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,3 +35,36 @@ jobs:
         with:
           name: TAD-Pay-MSI
           path: dist/TAD Pay *.msi
+
+  build-macos:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build webpack
+        run: npx webpack --config webpack.config.js --mode production
+
+      - name: Build macOS app (DMG + ZIP, Apple Silicon)
+        # Build non signé : pas de certificat Apple Developer requis.
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder --mac --arm64 --publish=never
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: TAD-Pay-macOS-DMG
+          path: dist/*.dmg
+
+      - name: Upload ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: TAD-Pay-macOS-ZIP
+          path: dist/*.zip
